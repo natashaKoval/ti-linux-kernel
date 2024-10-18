@@ -250,8 +250,11 @@
 		gpio-controller;
 		pinctrl-names = "default";
 		pinctrl-0 = <&pca9534_irq_default>;
-		interrupt-parent = <&main_gpio1>;
-		interrupts = <30 IRQ_TYPE_EDGE_FALLING>;
+		/*interrupt-parent = <&main_gpio1>;*/
+		/*interrupts = <30 IRQ_TYPE_EDGE_FALLING>;*/
+		interrupts-extended = <&main_gpio1 30 IRQ_TYPE_EDGE_FALLING>,
+					<&main_pmx0 0x01f0>;
+		interrupt-names = "irq", "wakeup";
 		#gpio-cells = <2>;
 		wakeup-source;
 		status = "okay";
