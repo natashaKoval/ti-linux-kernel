@@ -375,6 +375,8 @@ static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 	state = bdata->debounce_use_hrtimer ?
 			gpiod_get_value(bdata->gpiod) :
 			gpiod_get_value_cansleep(bdata->gpiod);
+
+	dev_err(input->dev.parent, "gpio state: %d\n", state);
 	if (state < 0) {
 		dev_err(input->dev.parent,
 			"failed to get gpio state: %d\n", state);
@@ -385,6 +387,7 @@ static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 		if (state)
 			input_event(input, type, button->code, button->value);
 	} else {
+		dev_err(input->dev.parent, "input event: gpio state: %d\n", state);
 		input_event(input, type, *bdata->code, state);
 	}
 }
@@ -392,6 +395,7 @@ static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 static void gpio_keys_debounce_event(struct gpio_button_data *bdata)
 {
 	gpio_keys_gpio_report_event(bdata);
+	dev_err(bdata->input->dev.parent, "gpio_keys_debounce_event\n");
 	input_sync(bdata->input);
 
 	if (bdata->button->wakeup)
@@ -402,7 +406,7 @@ static void gpio_keys_gpio_work_func(struct work_struct *work)
 {
 	struct gpio_button_data *bdata =
 		container_of(work, struct gpio_button_data, work.work);
-
+	dev_err(bdata->input->dev.parent, "gpio_keys_gpio_work_func\n");
 	gpio_keys_debounce_event(bdata);
 }
 
@@ -421,10 +425,10 @@ static irqreturn_t gpio_keys_gpio_isr(int irq, void *dev_id)
 	struct gpio_button_data *bdata = dev_id;
 
 	BUG_ON(irq != bdata->irq);
-
+	dev_err(bdata->input->dev.parent, "interrupt handler\n");
 	if (bdata->button->wakeup) {
 		const struct gpio_keys_button *button = bdata->button;
-
+		dev_err(bdata->input->dev.parent, "interrupt handler when button->wakeup\n");
 		pm_stay_awake(bdata->input->dev.parent);
 		if (bdata->suspended  &&
 		    (button->type == 0 || button->type == EV_KEY)) {
@@ -433,6 +437,7 @@ static irqreturn_t gpio_keys_gpio_isr(int irq, void *dev_id)
 			 * already released by the time we got interrupt
 			 * handler to run.
 			 */
+			dev_err(bdata->input->dev.parent, "interrupt handler when bdata->suspended\n");
 			input_report_key(bdata->input, button->code, 1);
 		}
 	}
@@ -755,8 +760,10 @@ static void gpio_keys_close(struct input_dev *input)
 	struct gpio_keys_drvdata *ddata = input_get_drvdata(input);
 	const struct gpio_keys_platform_data *pdata = ddata->pdata;
 
-	if (pdata->disable)
+	if (pdata->disable) {
+		dev_err(input->dev.parent, "gpio keys close\n");
 		pdata->disable(input->dev.parent);
+	}
 }
 
 /*
@@ -972,7 +979,10 @@ gpio_keys_button_enable_wakeup(struct gpio_button_data *bdata)
 		}
 	}
 
+	dev_err(bdata->input->dev.parent, "button wakeup trigger %08x for IRQ %d enabled!\n", bdata->wakeup_trigger_type, bdata->irq);
+
 	if (bdata->wakeirq) {
+		dev_err(bdata->input->dev.parent, "Are we here!?\n");
 		enable_irq(bdata->wakeirq);
 		disable_irq_nosync(bdata->irq);
 	}
@@ -1019,6 +1029,7 @@ gpio_keys_enable_wakeup(struct gpio_keys_drvdata *ddata)
 	for (i = 0; i < ddata->pdata->nbuttons; i++) {
 		bdata = &ddata->data[i];
 		if (bdata->button->wakeup) {
+			dev_err(bdata->input->dev.parent, "enable wakeup per button\n");
 			error = gpio_keys_button_enable_wakeup(bdata);
 			if (error)
 				goto err_out;
@@ -1031,8 +1042,10 @@ gpio_keys_enable_wakeup(struct gpio_keys_drvdata *ddata)
 err_out:
 	while (i--) {
 		bdata = &ddata->data[i];
-		if (bdata->button->wakeup)
+		if (bdata->button->wakeup) {
+			dev_err(bdata->input->dev.parent, "disable wakeup per button\n");
 			gpio_keys_button_disable_wakeup(bdata);
+		}
 		bdata->suspended = false;
 	}
 
@@ -1058,15 +1071,23 @@ static int __maybe_unused gpio_keys_suspend(struct device *dev)
 	struct gpio_keys_drvdata *ddata = dev_get_drvdata(dev);
 	struct input_dev *input = ddata->input;
 	int error;
-
+	dev_err(dev, "gpio keys suspend\n");
 	if (device_may_wakeup(dev)) {
+		dev_err(dev, "gpio keys suspend: device may wakeup\n");
+		if (!input_device_enabled(input)) {
+			dev_err(dev, "gpio keys suspend: input device is disabled!\n");
+		}
 		error = gpio_keys_enable_wakeup(ddata);
-		if (error)
+		if (error) {
+			dev_err(dev, "gpio keys suspend: device may wakeup: returns err=%d\n", error);
 			return error;
+		}
 	} else {
 		mutex_lock(&input->mutex);
-		if (input_device_enabled(input))
+		if (input_device_enabled(input)) {
+			dev_err(dev, "gpio keys suspend: gpio keys close\n");
 			gpio_keys_close(input);
+		}
 		mutex_unlock(&input->mutex);
 	}
 
@@ -1080,6 +1101,7 @@ static int __maybe_unused gpio_keys_resume(struct device *dev)
 	int error = 0;
 
 	if (device_may_wakeup(dev)) {
+		dev_err(dev, "device_may_wakeup is resuming\n");
 		gpio_keys_disable_wakeup(ddata);
 	} else {
 		mutex_lock(&input->mutex);
