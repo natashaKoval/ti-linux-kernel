@@ -30,6 +30,7 @@
 #include <linux/platform_data/i2c-omap.h>
 #include <linux/pm_runtime.h>
 #include <linux/pinctrl/consumer.h>
+#include <linux/pm_domain.h>
 
 /* I2C controller revisions */
 #define OMAP_I2C_OMAP1_REV_2		0x20
@@ -1363,6 +1364,7 @@ omap_i2c_probe(struct platform_device *pdev)
 	int r;
 	u32 rev;
 	u16 minor, major;
+	struct generic_pm_domain *genpd;
 
 	irq = platform_get_irq(pdev, 0);
 	if (irq < 0)
@@ -1399,7 +1401,8 @@ omap_i2c_probe(struct platform_device *pdev)
 	init_completion(&omap->cmd_complete);
 
 	omap->reg_shift = (omap->flags >> OMAP_I2C_FLAG_BUS_SHIFT__SHIFT) & 3;
-
+	genpd = pd_to_genpd(omap->dev->pm_domain);
+	genpd->flags |= GENPD_FLAG_ALWAYS_ON | GENPD_FLAG_ACTIVE_WAKEUP;
 	pm_runtime_enable(omap->dev);
 	pm_runtime_set_autosuspend_delay(omap->dev, OMAP_I2C_PM_TIMEOUT);
 	pm_runtime_use_autosuspend(omap->dev);
