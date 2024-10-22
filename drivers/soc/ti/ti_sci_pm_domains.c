@@ -165,7 +165,10 @@ static int ti_sci_pm_domain_probe(struct platform_device *pdev)
 							     args.args[0]);
 				if (!pd->pd.name)
 					return -ENOMEM;
-
+				if (!strcmp(pd->pd.name, "pd:102")) {
+					pr_err("%s: domain 102 setting active wakeup flag\n", __func__);
+					pd->pd.flags |= GENPD_FLAG_ACTIVE_WAKEUP;
+				}
 				pd->pd.power_off = ti_sci_pd_power_off;
 				pd->pd.power_on = ti_sci_pd_power_on;
 				pd->idx = args.args[0];
