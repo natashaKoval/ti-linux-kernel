@@ -69,7 +69,7 @@
 		};
 	};
 
-	gpio-keys {
+	gpio-keys_1 {
 		compatible = "gpio-keys";
 		status = "okay";
 		back {
@@ -78,14 +78,22 @@
 			gpios = <&pca9534 1 GPIO_ACTIVE_LOW>;
 			wakeup-source;
 		};
+	};
 
+	gpio-keys_2 {
+                compatible = "gpio-keys";
+                status = "okay";
 		home {
 			label = "Home";
 			linux,code = <KEY_HOME>;
 			gpios = <&pca9534 2 GPIO_ACTIVE_LOW>;
 			wakeup-source;
+			autorepeat;
 		};
+	};
 
+	gpio-keys_3 {
+                compatible = "gpio-keys";
 		menu {
 			label = "Menu";
 			linux,code = <KEY_MENU>;
