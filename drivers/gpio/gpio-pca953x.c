@@ -742,12 +742,14 @@ static int pca953x_irq_set_wake(struct irq_data *d, unsigned int on)
 {
 	struct gpio_chip *gc = irq_data_get_irq_chip_data(d);
 	struct pca953x_chip *chip = gpiochip_get_data(gc);
-
-	if (on)
+	dev_err(&chip->client->dev, "pca953x setting wakeup path ");
+	if (on) {
+		dev_err(&chip->client->dev, "incrementing\n");
 		atomic_inc(&chip->wakeup_path);
-	else
+	} else {
+		dev_err(&chip->client->dev, "decrementing\n");
 		atomic_dec(&chip->wakeup_path);
-
+	}
 	return irq_set_irq_wake(chip->client->irq, on);
 }
 
@@ -1282,16 +1284,17 @@ static int pca953x_regcache_sync(struct device *dev)
 static int pca953x_suspend(struct device *dev)
 {
 	struct pca953x_chip *chip = dev_get_drvdata(dev);
-
+	dev_err(dev, "pca953x is suspending....\n");
 	mutex_lock(&chip->i2c_lock);
 	regcache_cache_only(chip->regmap, true);
 	mutex_unlock(&chip->i2c_lock);
 
-	if (atomic_read(&chip->wakeup_path))
+	if (atomic_read(&chip->wakeup_path)) {
+		dev_err(dev, "pca953x is setting wakeup path\n");
 		device_set_wakeup_path(dev);
-	else
+	} else {
 		regulator_disable(chip->regulator);
-
+	}
 	return 0;
 }
 
@@ -1299,7 +1302,7 @@ static int pca953x_resume(struct device *dev)
 {
 	struct pca953x_chip *chip = dev_get_drvdata(dev);
 	int ret;
-
+	dev_err(dev, "pca953x is resuming....\n");
 	if (!atomic_read(&chip->wakeup_path)) {
 		ret = regulator_enable(chip->regulator);
 		if (ret) {
