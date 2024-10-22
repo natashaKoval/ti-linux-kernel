@@ -680,8 +680,9 @@ static int gpio_keys_setup_key(struct platform_device *pdev,
 	 * If platform has specified that the button can be disabled,
 	 * we don't want it to share the interrupt line.
 	 */
-	if (!button->can_disable)
-		irqflags |= IRQF_SHARED;
+	/*if (!button->can_disable)
+		irqflags |= IRQF_SHARED;*/
+	irqflags |= IRQF_NO_SUSPEND;
 
 	error = devm_request_any_context_irq(dev, bdata->irq, isr, irqflags,
 					     desc, bdata);
@@ -694,6 +695,7 @@ static int gpio_keys_setup_key(struct platform_device *pdev,
 	if (!button->wakeirq)
 		return 0;
 
+	dev_err(dev, "Are we still here ??!!\n");
 	/* Use :wakeup suffix like drivers/base/power/wakeirq.c does */
 	wakedesc = devm_kasprintf(dev, GFP_KERNEL, "%s:wakeup", desc);
 	if (!wakedesc)
