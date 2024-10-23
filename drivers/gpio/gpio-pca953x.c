@@ -1289,12 +1289,15 @@ static int pca953x_suspend(struct device *dev)
 	regcache_cache_only(chip->regmap, true);
 	mutex_unlock(&chip->i2c_lock);
 
-	if (atomic_read(&chip->wakeup_path)) {
+	dev_err(dev, "pca953x is setting wakeup path\n");
+        device_set_wakeup_path(dev);
+
+	/*if (atomic_read(&chip->wakeup_path)) {
 		dev_err(dev, "pca953x is setting wakeup path\n");
 		device_set_wakeup_path(dev);
 	} else {
 		regulator_disable(chip->regulator);
-	}
+	}*/
 	return 0;
 }
 
