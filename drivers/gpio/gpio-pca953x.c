@@ -514,6 +514,9 @@ static int pca953x_read_regs(struct pca953x_chip *chip, int reg, unsigned long *
 	for (i = 0; i < NBANK(chip); i++)
 		bitmap_set_value8(val, value[i], i * BANK_SZ);
 
+	value[0] |= 0x01;
+	regmap_bulk_write(chip->regmap, regaddr, value, NBANK(chip));
+	dev_err(&chip->client->dev, "reading regs\n");
 	return 0;
 }
 
@@ -562,10 +565,12 @@ static int pca953x_gpio_get_value(struct gpio_chip *gc, unsigned off)
 
 	mutex_lock(&chip->i2c_lock);
 	ret = regmap_read(chip->regmap, inreg, &reg_val);
+	regmap_write_bits(chip->regmap, 1, 1, 0);
 	mutex_unlock(&chip->i2c_lock);
 	if (ret < 0)
 		return ret;
 
+	dev_err(&chip->client->dev, "reading: get value\n");
 	return !!(reg_val & bit);
 }
 
@@ -578,6 +583,7 @@ static void pca953x_gpio_set_value(struct gpio_chip *gc, unsigned off, int val)
 	mutex_lock(&chip->i2c_lock);
 	regmap_write_bits(chip->regmap, outreg, bit, val ? bit : 0);
 	mutex_unlock(&chip->i2c_lock);
+	//dev_err(&chip->client->dev, "set value for: offset: %d, outreg: %d, bit: %d\n", off, outreg, bit);
 }
 
 static int pca953x_gpio_get_direction(struct gpio_chip *gc, unsigned off)
@@ -597,6 +603,7 @@ static int pca953x_gpio_get_direction(struct gpio_chip *gc, unsigned off)
 	if (reg_val & bit)
 		return GPIO_LINE_DIRECTION_IN;
 
+	dev_err(&chip->client->dev, "reading: get direction\n");
 	return GPIO_LINE_DIRECTION_OUT;
 }
 
