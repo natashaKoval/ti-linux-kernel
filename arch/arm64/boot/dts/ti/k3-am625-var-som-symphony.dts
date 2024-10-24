@@ -483,7 +483,7 @@
 
 	pca9534_irq_default: pca9534_irq_default {
 		pinctrl-single,pins = <
-			AM62X_IOPAD(0x01f0, PIN_INPUT, 7) /* (A18) EXT_REFCLK1.GPIO1_30 */
+			AM62X_IOPAD(0x01f0, PIN_INPUT | WKUP_EN | WK_LVL_EN, 7) /* (A18) EXT_REFCLK1.GPIO1_30 */
 		>;
 	};
 

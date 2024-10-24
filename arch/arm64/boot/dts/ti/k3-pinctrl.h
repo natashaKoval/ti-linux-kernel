@@ -40,6 +40,8 @@
 #define PIN_DEBOUNCE_CONF6	(6 << DEBOUNCE_SHIFT)
 
 #define WKUP_EN			(1 << WKUP_EN_SHIFT)
+#define WK_LVL_POL_HIGH         (1 << 8)
+#define WK_LVL_EN               (1 << 7)
 
 #define AM62AX_IOPAD(pa, val, muxmode)		(((pa) & 0x1fff)) ((val) | (muxmode))
 #define AM62AX_MCU_IOPAD(pa, val, muxmode)	(((pa) & 0x1fff)) ((val) | (muxmode))
