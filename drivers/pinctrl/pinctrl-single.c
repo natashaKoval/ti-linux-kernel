@@ -1456,11 +1456,13 @@ static void pcs_irq_unmask(struct irq_data *d)
  */
 static int pcs_irq_set_wake(struct irq_data *d, unsigned int state)
 {
-	if (state)
+	if (state) {
+		printk(KERN_ERR "pinctrl WAKEUP IRQ name=%s unmask, state=%d\n", d->chip->name, state);
 		pcs_irq_unmask(d);
-	else
+	} else {
+		printk(KERN_ERR "pinctrl WAKEUP IRQ name=%s mask, state=%d\n", d->chip->name, state);
 		pcs_irq_mask(d);
-
+	}
 	return 0;
 }
 
