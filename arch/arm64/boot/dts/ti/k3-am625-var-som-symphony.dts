@@ -76,7 +76,7 @@
 			label = "Back";
 			linux,code = <KEY_BACK>;
 			gpios = <&pca9534 1 GPIO_ACTIVE_LOW>;
-			wakeup-source;
+			//wakeup-source;
 		};
 	};
 
@@ -87,8 +87,8 @@
 			label = "Home";
 			linux,code = <KEY_HOME>;
 			gpios = <&pca9534 2 GPIO_ACTIVE_LOW>;
-			wakeup-source;
-			autorepeat;
+			//wakeup-source;
+			//autorepeat;
 		};
 	};
 
@@ -98,7 +98,7 @@
 			label = "Menu";
 			linux,code = <KEY_MENU>;
 			gpios = <&pca9534 3 GPIO_ACTIVE_LOW>;
-			wakeup-source;
+			//wakeup-source;
 		};
 	};
 
