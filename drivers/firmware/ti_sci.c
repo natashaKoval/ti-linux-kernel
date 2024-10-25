@@ -3582,11 +3582,6 @@ static int ti_sci_suspend(struct device *dev)
 	struct ti_sci_info *info = dev_get_drvdata(dev);
 	int ret;
 
-	ret = ti_sci_cmd_set_io_isolation(&info->handle, TISCI_MSG_VALUE_IO_ENABLE);
-	if (ret)
-		return ret;
-	dev_dbg(dev, "%s: set isolation: %d\n", __func__, ret);
-
 	ret = ti_sci_prepare_system_suspend(info);
 	if (ret)
 		return ret;
@@ -3594,9 +3589,22 @@ static int ti_sci_suspend(struct device *dev)
 	return 0;
 }
 
-static int ti_sci_resume(struct device *dev)
+static int ti_sci_suspend_late(struct device *dev)
 {
 	struct ti_sci_info *info = dev_get_drvdata(dev);
+	int ret;
+
+	ret = ti_sci_cmd_set_io_isolation(&info->handle, TISCI_MSG_VALUE_IO_ENABLE);
+	if (ret)
+		return ret;
+	dev_info(dev, "%s: set isolation: %d\n", __func__, ret);
+
+	return 0;
+}
+
+static int ti_sci_resume(struct device *dev)
+{
+	/*struct ti_sci_info *info = dev_get_drvdata(dev);
 	u32 source;
 	u64 time;
 	int ret = 0;
@@ -3607,14 +3615,34 @@ static int ti_sci_resume(struct device *dev)
 	dev_dbg(dev, "%s: disable isolation: %d\n", __func__, ret);
 
 	ti_sci_msg_cmd_lpm_wake_reason(&info->handle, &source, &time);
+	dev_info(dev, "%s: wakeup source: 0x%X\n", __func__, source);*/
+
+	return 0;
+}
+
+static int ti_sci_resume_early(struct device *dev)
+{
+	struct ti_sci_info *info = dev_get_drvdata(dev);
+	u32 source;
+	u64 time;
+	int ret = 0;
+
+	ret = ti_sci_cmd_set_io_isolation(&info->handle, TISCI_MSG_VALUE_IO_DISABLE);
+	if (ret)
+		return ret;
+	dev_info(dev, "%s: disable isolation: %d\n", __func__, ret);
+
+	ti_sci_msg_cmd_lpm_wake_reason(&info->handle, &source, &time);
 	dev_info(dev, "%s: wakeup source: 0x%X\n", __func__, source);
 
 	return 0;
 }
 
 static const struct dev_pm_ops ti_sci_pm_ops = {
+	.suspend_late = ti_sci_suspend_late,
 	.suspend_noirq = ti_sci_suspend,
 	.resume_noirq = ti_sci_resume,
+	.resume_early = ti_sci_resume_early,
 };
 
 /* Does not return if successful */
